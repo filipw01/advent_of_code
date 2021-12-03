@@ -1,11 +1,12 @@
-use std::fs::read_to_string;
+use crate::utils::load_input;
+use itertools::Itertools;
 
-pub fn calculate_depth_increase() -> Result<i32, &'static str> {
-    let file_content = read_to_string("day1/data.txt").unwrap();
-    let mut lines: Vec<&str> = file_content.split("\n").collect();
-    lines.pop();
-
-    // solution
-
-    Err("No solution")
+pub fn calculate_depth_increase() -> usize {
+    let lines = load_input(1);
+    lines
+        .into_iter()
+        .map(|x| x.parse::<u16>().expect("Couldn't parse to u16"))
+        .tuple_windows()
+        .filter(|(a, _, _, d)| a < d)
+        .count()
 }
