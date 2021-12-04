@@ -11,6 +11,7 @@ mod day1;
 // mod day19;
 mod day2;
 mod utils;
+mod day4;
 // mod day20;
 // mod day21;
 // mod day3;
@@ -29,7 +30,7 @@ fn main() {
         "1" => day1::run(),
         "2" => day2::run(),
         // "3" => day3::run(),
-        // "4" => day4::run(),
+        "4" => day4::run(),
         // "5" => day5::run(),
         // "6" => day6::run(),
         // "7" => day7::run(),
