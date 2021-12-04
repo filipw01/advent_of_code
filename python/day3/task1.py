@@ -13,7 +13,6 @@ def solve():
                     case '1':
                         gamma[i] += 1
         gamma = [0 if bit < 0 else 1 for bit in gamma]
-        print(gamma)
         gamma_bin = ''.join([str(bit) for bit in gamma])
         epsilon_bin = ''.join([str((bit - 1) * -1) for bit in gamma])
         gamma_num = int(gamma_bin, 2)
