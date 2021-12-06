@@ -1,5 +1,4 @@
 use crate::utils::load_input;
-use itertools::Itertools;
 
 #[derive(Debug)]
 struct Vent {
