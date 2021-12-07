@@ -17,10 +17,13 @@ pub fn solve() -> usize {
         for (timer, fish_count) in school {
             if timer == 0 {
                 next_gen.insert(8, fish_count);
-                let old_fish_count = next_gen.get(&(6 as usize)).unwrap_or(&(0 as usize));
+                let old_fish_count = next_gen.get(&(6 as usize)).unwrap_or(&(0 as usize)).clone();
                 next_gen.insert(6, fish_count + old_fish_count);
             } else {
-                let old_fish_count = next_gen.get(&(timer - 1 as usize)).unwrap_or(&(0 as usize));
+                let old_fish_count = next_gen
+                    .get(&(timer - 1 as usize))
+                    .unwrap_or(&(0 as usize))
+                    .clone();
                 next_gen.insert(timer - 1, fish_count + old_fish_count);
             }
         }
