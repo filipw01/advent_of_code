@@ -9,6 +9,7 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
+mod day10;
 mod utils;
 
 fn main() {
@@ -23,6 +24,7 @@ fn main() {
         "7" => day7::run(),
         "8" => day8::run(),
         "9" => day9::run(),
+        "10" => day10::run(),
         day => panic!("Wrong day, got {}", day),
     }
 }
