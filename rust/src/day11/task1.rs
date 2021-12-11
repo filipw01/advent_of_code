@@ -21,13 +21,11 @@ pub fn solve() -> usize {
         })
         .collect();
 
-    let mut day = 0;
-    loop {
-        day += 1;
-        if simulate(&mut octopuses) == 100 {
-            return day;
-        };
+    let mut total_flashes = 0;
+    for _ in 0..100 {
+        total_flashes += simulate(&mut octopuses);
     }
+    total_flashes
 }
 
 fn simulate(octopuses: &mut Vec<Vec<Octopus>>) -> usize {

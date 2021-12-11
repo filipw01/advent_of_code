@@ -1,77 +1,85 @@
-use itertools::Itertools;
 use crate::utils::load_input;
 
-pub fn solve() -> usize {
-    let lines = load_input(10);
-    let scores: Vec<usize> = lines
-        .iter()
-        .filter_map(|line| {
-            let mut stack = vec![];
-            let score = line
-                .chars()
-                .find_map(|c| match c {
-                    '<' | '{' | '[' | '(' => {
-                        stack.push(c);
-                        None
-                    }
-                    '>' => {
-                        if check_closing_char(c, *stack.last().unwrap()) {
-                            stack.pop();
-                            None
-                        } else {
-                            Some(25137)
-                        }
-                    }
-                    '}' => {
-                        if check_closing_char(c, *stack.last().unwrap()) {
-                            stack.pop();
-                            None
-                        } else {
-                            Some(1197)
-                        }
-                    }
-                    ']' => {
-                        if check_closing_char(c, *stack.last().unwrap()) {
-                            stack.pop();
-                            None
-                        } else {
-                            Some(57)
-                        }
-                    }
-                    ')' => {
-                        if check_closing_char(c, *stack.last().unwrap()) {
-                            stack.pop();
-                            None
-                        } else {
-                            Some(3)
-                        }
-                    }
-                    unexpected => panic!("Got unexpected character: {}", unexpected),
-                })
-                .unwrap_or(0);
-            if score == 0 {
-                Some(stack.into_iter().rev().fold(0, |score, char| {
-                    score * 5
-                        + match char {
-                            '(' => 1,
-                            '[' => 2,
-                            '{' => 3,
-                            '<' => 4,
-                            unexpected => panic!("Got unexpected character: {}", unexpected),
-                        }
-                }))
-            } else {
-                None
-            }
-        })
-        .sorted()
-        .collect();
-    *scores.get(scores.len() / 2).unwrap()
+#[derive(Debug)]
+struct Octopus {
+    energy: u8,
+    flashed: bool,
 }
 
-fn check_closing_char(received: char, expected_match: char) -> bool {
-    (received == '>' && expected_match == '<')
-        || (received == '}' && expected_match == '{')
-        || (received == ']' && expected_match == '[')
-        || (received == ')' && expected_match == '(')
+pub fn solve() -> usize {
+    let lines = load_input(11);
+    let mut octopuses: Vec<Vec<Octopus>> = lines
+        .iter()
+        .map(|octopus_line| {
+            octopus_line
+                .chars()
+                .map(|c| Octopus {
+                    energy: c.to_digit(10).unwrap() as u8,
+                    flashed: false,
+                })
+                .collect()
+        })
+        .collect();
+
+    let mut day = 0;
+    loop {
+        day += 1;
+        if simulate(&mut octopuses) == 100 {
+            return day;
+        };
+    }
+}
+
+fn simulate(octopuses: &mut Vec<Vec<Octopus>>) -> usize {
+    octopuses.iter_mut().for_each(|octopus_line| {
+        octopus_line.iter_mut().for_each(|octopus| {
+            octopus.energy += 1;
+            octopus.flashed = false;
+        })
+    });
+    let mut flashes = 0;
+    for y in 0..octopuses.len() {
+        for x in 0..octopuses.len() {
+            flashes += flash(octopuses, (x, y));
+        }
+    }
+    flashes
+}
+
+fn flash(octopuses: &mut Vec<Vec<Octopus>>, (x, y): (usize, usize)) -> usize {
+    let octopus: &mut Octopus = octopuses.get_mut(y).unwrap().get_mut(x).unwrap();
+    if octopus.energy < 10 {
+        return 0;
+    }
+    let mut flashes = 1;
+    octopus.flashed = true;
+    octopus.energy = 0;
+    for y_diff in 0..3 {
+        for x_diff in 0..3 {
+            let new_y = y as isize + y_diff - 1;
+            let new_x = x as isize + x_diff - 1;
+            if new_y < 0 || new_x < 0 {
+                continue;
+            }
+            let mut empty_vec: Vec<Octopus> = vec![];
+            let mut empty_octopus = Octopus {
+                energy: 0,
+                flashed: true,
+            };
+            let octopus: &mut Octopus = octopuses
+                .get_mut(new_y as usize)
+                .unwrap_or(&mut empty_vec)
+                .get_mut(new_x as usize)
+                .unwrap_or(&mut empty_octopus);
+            if octopus.flashed == true {
+                continue;
+            }
+
+            octopus.energy += 1;
+            if octopus.energy > 9 {
+                flashes += flash(octopuses, (new_x as usize, new_y as usize));
+            }
+        }
+    }
+    flashes
 }
