@@ -1,6 +1,8 @@
 use std::env::args;
 
 mod day1;
+mod day10;
+mod day11;
 mod day2;
 mod day3;
 mod day4;
@@ -9,7 +11,6 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
-mod day10;
 mod utils;
 
 fn main() {
@@ -25,6 +26,7 @@ fn main() {
         "8" => day8::run(),
         "9" => day9::run(),
         "10" => day10::run(),
+        "11" => day11::run(),
         day => panic!("Wrong day, got {}", day),
     }
 }
