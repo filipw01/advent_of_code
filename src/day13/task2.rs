@@ -8,7 +8,7 @@ enum Coord {
     Y(usize),
 }
 
-pub fn solve() -> usize {
+pub fn solve() -> String {
     let input = load_input(13).join("\n");
     let (dots, folds) = input.split_once("\n\n").unwrap();
     let dots: HashSet<(usize, usize)> = dots
@@ -29,7 +29,6 @@ pub fn solve() -> usize {
     let final_dots = folds
         .into_iter()
         .fold(dots, |dots, fold| fold_paper(dots, &fold));
-    println!("{:?}", final_dots);
 
     let rendered = itertools::repeat_n(0, 6)
         .enumerate()
@@ -46,8 +45,7 @@ pub fn solve() -> usize {
                 .collect::<String>()
         })
         .join("\n");
-    println!("{}", rendered);
-    0
+    rendered
 }
 
 fn fold_paper(dots: HashSet<(usize, usize)>, fold: &Coord) -> HashSet<(usize, usize)> {
