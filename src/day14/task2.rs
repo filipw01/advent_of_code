@@ -34,12 +34,14 @@ pub fn solve() -> usize {
     end_polymer.iter().for_each(|(pair, count)| {
         let c1 = pair.chars().next().unwrap();
         if let Some(old_count) = letters_count.get(&c1) {
+            let old_count = old_count.clone();
             letters_count.insert(c1, old_count + count);
         } else {
             letters_count.insert(c1, *count);
         }
         let c2 = pair.chars().last().unwrap();
         if let Some(old_count) = letters_count.get(&c2) {
+            let old_count = old_count.clone();
             letters_count.insert(c2, old_count + count);
         } else {
             letters_count.insert(c2, *count);
@@ -59,12 +61,14 @@ fn insert_matching_letters(
         let matching_letter = instructions.get(pair.as_str()).unwrap();
         let new_pair1 = format!("{}{}", pair.chars().next().unwrap(), matching_letter);
         if let Some(old_count) = new_polymer.get(new_pair1.as_str()) {
+            let old_count = old_count.clone();
             new_polymer.insert(new_pair1, old_count + *count);
         } else {
             new_polymer.insert(new_pair1, *count);
         }
         let new_pair2 = format!("{}{}", matching_letter, pair.chars().last().unwrap());
         if let Some(old_count) = new_polymer.get(new_pair2.as_str()) {
+            let old_count = old_count.clone();
             new_polymer.insert(new_pair2, old_count + *count);
         } else {
             new_polymer.insert(new_pair2, *count);

@@ -16,6 +16,7 @@ pub fn solve() -> usize {
     let mut letters_count: HashMap<char, usize> = HashMap::new();
     end_polymer.chars().for_each(|c| {
         if let Some(count) = letters_count.get(&c) {
+            let count = count.clone();
             letters_count.insert(c, count + 1);
         } else {
             letters_count.insert(c, 1);
