@@ -4,6 +4,7 @@ pub fn solution(input: &str) -> usize {
     input.len()
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 

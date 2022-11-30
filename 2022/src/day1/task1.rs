@@ -5,6 +5,7 @@ pub fn solution(input: &str) -> usize {
     lines.len()
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
