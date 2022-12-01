@@ -6,13 +6,13 @@ pub fn solution(input: &str) -> usize {
     let mut max_calories = 0;
     let mut current_elf_calories = 0;
 
-    for calories in lines{
-        if calories == "" {
+    for calories in lines {
+        if calories.is_empty() {
             current_elf_calories = 0
         } else {
             current_elf_calories += calories.parse::<usize>().unwrap();
         }
-        if current_elf_calories > max_calories{
+        if current_elf_calories > max_calories {
             max_calories = current_elf_calories;
         }
     }
@@ -26,7 +26,9 @@ mod tests {
 
     #[test]
     fn test_solution() {
-        assert_eq!(solution("1000
+        assert_eq!(
+            solution(
+                "1000
 2000
 3000
 
@@ -40,6 +42,9 @@ mod tests {
 9000
 
 10000
-"), 24000);
+"
+            ),
+            24000
+        );
     }
 }
