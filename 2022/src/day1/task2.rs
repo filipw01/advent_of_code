@@ -1,9 +1,19 @@
 use itertools::Itertools;
 
 pub fn solution(input: &str) -> usize {
-    let lines: Vec<String> = input.lines().map_into::<String>().collect();
+    get_elves(input)
+        .into_iter()
+        .map(|calories_group| calories_group.into_iter().sum::<usize>())
+        .sorted()
+        .rev()
+        .take(3)
+        .sum()
+}
 
-    lines
+pub fn get_elves(input: &str) -> Vec<Vec<usize>> {
+    input
+        .lines()
+        .map_into::<String>()
         .into_iter()
         .group_by(|calories| !calories.is_empty())
         .into_iter()
@@ -11,12 +21,9 @@ pub fn solution(input: &str) -> usize {
         .map(|(_, calories_group)| {
             calories_group
                 .map(|calories| calories.parse::<usize>().unwrap())
-                .sum::<usize>()
+                .collect()
         })
-        .sorted()
-        .rev()
-        .take(3)
-        .sum()
+        .collect()
 }
 
 #[cfg(test)]
