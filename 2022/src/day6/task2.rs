@@ -1,17 +1,7 @@
-use itertools::Itertools;
-use std::collections::VecDeque;
+use crate::day6::task1::find_first_package;
 
 pub fn solution(input: &str) -> usize {
-    let mut window = VecDeque::from(input.chars().take(14).collect_vec());
-    for (index, char) in input.chars().skip(14).enumerate() {
-        if !window.iter().all_unique() {
-            window.pop_front();
-            window.push_back(char);
-        } else {
-            return index + 14;
-        }
-    }
-    panic!("No solution found");
+    find_first_package(input, 14)
 }
 
 #[cfg(test)]

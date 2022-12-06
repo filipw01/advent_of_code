@@ -1,13 +1,16 @@
 use itertools::Itertools;
 
 pub fn solution(input: &str) -> usize {
+    find_first_package(input, 4)
+}
+
+pub fn find_first_package(input: &str, window_size: usize) -> usize {
     input
-        .chars()
-        .tuple_windows()
-        .find_position(|(a, b, c, d)| [a, b, c, d].into_iter().all_unique())
+        .as_bytes()
+        .windows(window_size)
+        .position(|window| window.iter().all_unique())
         .unwrap()
-        .0
-        + 4
+        + window_size
 }
 
 #[cfg(test)]
