@@ -5,10 +5,15 @@ use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::rc::Rc;
 
-#[derive(Debug)]
 struct File {
     parent_dir: Option<DirHandle>,
     size: usize,
+}
+
+impl Debug for File {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("File").field("size", &self.size).finish()
+    }
 }
 
 impl From<&str> for File {
@@ -38,7 +43,12 @@ struct Dir {
 
 impl Debug for Dir {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Dir").field("name", &self.name).finish()
+        f.debug_struct("Dir")
+            .field("size", &self.size)
+            .field("name", &self.name)
+            .field("files", &self.files)
+            .field("dirs", &self.dirs)
+            .finish()
     }
 }
 
@@ -109,6 +119,7 @@ pub fn get_dir_sizes(input: &str) -> HashMap<String, usize> {
     let mut cwd = Cwd::from(tree.clone());
     let mut dir_handles = HashMap::from([(cwd.get_path(), tree.clone())]);
     for line in input.lines() {
+        println!("dir_handles: {:?}", dir_handles);
         let mut split = line.split(' ');
         let action_type = split.next().unwrap();
         match action_type {
