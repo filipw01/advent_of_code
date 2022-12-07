@@ -1,9 +1,13 @@
 use itertools::Itertools;
+use std::borrow::Borrow;
+use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
+use std::fmt::Debug;
+use std::rc::Rc;
 
 #[derive(Debug)]
 struct File {
-    parent_dir: Option<String>,
+    parent_dir: Option<DirHandle>,
     size: usize,
 }
 
@@ -22,18 +26,27 @@ impl From<&str> for File {
     }
 }
 
-#[derive(Debug)]
+type DirHandle = Rc<RefCell<Dir>>;
+
 struct Dir {
-    parent_dir: Option<String>,
+    size: usize,
+    parent_dir: Option<DirHandle>,
     name: String,
     files: Vec<File>,
-    dirs: Vec<Dir>,
+    dirs: Vec<DirHandle>,
+}
+
+impl Debug for Dir {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Dir").field("name", &self.name).finish()
+    }
 }
 
 impl From<&str> for Dir {
     fn from(s: &str) -> Self {
         Dir {
             parent_dir: None,
+            size: 0,
             name: s.to_string(),
             files: Vec::new(),
             dirs: Vec::new(),
@@ -41,19 +54,21 @@ impl From<&str> for Dir {
     }
 }
 
+impl Dir {
+    fn add_size_to_parent(&mut self) {
+        if let Some(parent) = self.parent_dir.as_ref() {
+            parent.borrow_mut().size += self.size;
+        }
+    }
+}
+
 struct Cwd {
-    path: Vec<String>,
+    path: Vec<DirHandle>,
 }
 
 impl Cwd {
-    fn new() -> Self {
-        Cwd {
-            path: vec!["/".to_string()],
-        }
-    }
-
-    fn push(&mut self, dir: &str) {
-        self.path.push(dir.to_string());
+    fn push(&mut self, dir: DirHandle) {
+        self.path.push(dir);
     }
 
     fn pop(&mut self) {
@@ -61,19 +76,22 @@ impl Cwd {
     }
 
     fn get_path(&self) -> String {
-        self.path.join("/").split_off(1)
+        self.path
+            .iter()
+            .map(|handle| {
+                <Rc<RefCell<Dir>> as Borrow<RefCell<Dir>>>::borrow(handle)
+                    .borrow()
+                    .name
+                    .clone()
+            })
+            .join("/")
+            .split_off(1)
     }
+}
 
-    fn get_current_dir<'a, 'b>(&'b self, tree: &'a mut Dir) -> &'a mut Dir {
-        let mut current_dir = tree;
-        for dir in self.path.iter().skip(1) {
-            current_dir = current_dir
-                .dirs
-                .iter_mut()
-                .find(|d| d.name == *dir)
-                .unwrap();
-        }
-        current_dir
+impl From<DirHandle> for Cwd {
+    fn from(dir: DirHandle) -> Self {
+        Cwd { path: vec![dir] }
     }
 }
 
@@ -87,8 +105,9 @@ pub fn solution(input: &str) -> usize {
 }
 
 pub fn get_dir_sizes(input: &str) -> HashMap<String, usize> {
-    let mut cwd = Cwd::new();
-    let mut tree = Dir::from("/");
+    let tree = Rc::from(RefCell::from(Dir::from("/")));
+    let mut cwd = Cwd::from(tree.clone());
+    let mut dir_handles = HashMap::from([(cwd.get_path(), tree.clone())]);
     for line in input.lines() {
         let mut split = line.split(' ');
         let action_type = split.next().unwrap();
@@ -97,49 +116,44 @@ pub fn get_dir_sizes(input: &str) -> HashMap<String, usize> {
                 if split.next().unwrap() == "cd" {
                     let cd_to = split.next().unwrap();
                     match cd_to {
-                        "/" => cwd = Cwd::new(),
+                        "/" => cwd = Cwd::from(tree.clone()),
                         ".." => cwd.pop(),
-                        _ => cwd.push(cd_to),
+                        _ => {
+                            let dir_name = format!("{}/{}", cwd.get_path(), cd_to);
+                            if let Some(dir) = dir_handles.get(dir_name.as_str()) {
+                                cwd.push(dir.clone());
+                            } else {
+                                panic!("Unable to find dir: {}", cwd.get_path());
+                            }
+                        }
                     }
                 }
             }
             "dir" => {
                 let dir_name = split.next().unwrap();
-                let mut dir = Dir::from(dir_name);
-                dir.parent_dir = Some(cwd.get_path());
-                let parent_dir = cwd.get_current_dir(&mut tree);
-                parent_dir.dirs.push(dir);
+                let full_dir_name = format!("{}/{}", cwd.get_path(), dir_name);
+                let dir = Rc::from(RefCell::from(Dir::from(dir_name)));
+                dir_handles.insert(full_dir_name, dir.clone());
+                if let Some(parent_dir) = dir_handles.get(&*cwd.get_path()) {
+                    dir.borrow_mut().parent_dir = Some(parent_dir.clone());
+                    parent_dir.borrow_mut().dirs.push(dir.clone());
+                } else {
+                    panic!("Unable to find dir: {}", cwd.get_path());
+                }
             }
             _ => {
                 let mut file = File::from(line);
-                file.parent_dir = Some(cwd.get_path());
-                let parent_dir = cwd.get_current_dir(&mut tree);
-                parent_dir.files.push(file);
+                if let Some(parent_dir) = dir_handles.get(&*cwd.get_path()) {
+                    file.parent_dir = Some(parent_dir.clone());
+                    parent_dir.borrow_mut().size += file.size;
+                    parent_dir.borrow_mut().files.push(file);
+                } else {
+                    panic!("Unable to find dir: {}", cwd.get_path());
+                }
             }
         }
     }
-    let mut dir_sizes = HashMap::new();
-    let mut dirs_to_traverse = VecDeque::from([&tree]);
-    while !dirs_to_traverse.is_empty() {
-        let dir = dirs_to_traverse.pop_front().unwrap();
-        let dir_path = if dir.name == "/" {
-            "/".to_string()
-        } else {
-            format!(
-                "{}/{}",
-                dir.parent_dir.as_ref().unwrap_or(&"".to_string()),
-                dir.name
-            )
-        };
-        let dir_size = dir.files.iter().map(|f| f.size).sum::<usize>();
-        dir_sizes.insert(dir_path, dir_size);
-        for dir in dir.dirs.iter() {
-            dirs_to_traverse.push_back(dir);
-        }
-    }
-
-    let mut new_dir_sizes = dir_sizes.clone();
-    dir_sizes
+    dir_handles
         .iter()
         .sorted_by(|(name_a, _), (name_b, _)| {
             name_b
@@ -148,17 +162,14 @@ pub fn get_dir_sizes(input: &str) -> HashMap<String, usize> {
                 .count()
                 .cmp(&name_a.chars().filter(|c| *c == '/').count())
         })
-        .for_each(|(subdir_name, subdir_size)| {
-            dir_sizes
-                .iter()
-                .filter(|(name, _)| subdir_name.starts_with(*name) && *name != subdir_name)
-                .for_each(|(name, _)| {
-                    if let Some(new_dir_size) = new_dir_sizes.get_mut(name) {
-                        *new_dir_size += subdir_size;
-                    }
-                });
+        .for_each(|(_, dir)| {
+            dir.borrow_mut().add_size_to_parent();
         });
-    new_dir_sizes
+
+    dir_handles
+        .into_iter()
+        .map(|(name, dir)| (name, dir.borrow_mut().size))
+        .collect()
 }
 
 #[cfg(test)]

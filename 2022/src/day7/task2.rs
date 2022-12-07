@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 pub fn solution(input: &str) -> usize {
     let dir_sizes = get_dir_sizes(input);
-    let total_occupied_space = dir_sizes.get("/").unwrap();
+    let total_occupied_space = dir_sizes.get("").unwrap();
     let fs_size = 70000000;
     let space_needed = 30000000;
     let space_to_free = space_needed + total_occupied_space - fs_size;
