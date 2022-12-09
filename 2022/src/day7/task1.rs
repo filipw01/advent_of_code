@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use std::borrow::Borrow;
 use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
 

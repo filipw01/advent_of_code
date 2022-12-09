@@ -1,6 +1,10 @@
+extern crate core;
+
 use std::env::args;
 
 mod day1;
+mod day10;
+mod day11;
 mod day2;
 mod day3;
 mod day4;
@@ -8,6 +12,7 @@ mod day5;
 mod day6;
 mod day7;
 mod day8;
+mod day9;
 mod utils;
 
 fn main() {
@@ -21,6 +26,9 @@ fn main() {
         "6" => day6::run(),
         "7" => day7::run(),
         "8" => day8::run(),
+        "9" => day9::run(),
+        "10" => day10::run(),
+        "11" => day11::run(),
         _ => panic!("Wrong day, got {}", day),
     }
 }
