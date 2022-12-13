@@ -1,16 +1,9 @@
-use itertools::Itertools;
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Debug, Error, Formatter};
 
-const HEADER: &str = "\x1b[95m";
-const OKBLUE: &str = "\x1b[94m";
-const OKCYAN: &str = "\x1b[96m";
-const OKGREEN: &str = "\x1b[92m";
-const WARNING: &str = "\x1b[93m";
-const FAIL: &str = "\x1b[91m";
-const ENDC: &str = "\x1b[0m";
-const BOLD: &str = "\x1b[1m";
-const UNDERLINE: &str = "\x1b[4m";
+const GREEN: &str = "\x1b[92m";
+const RED: &str = "\x1b[91m";
+const END_FMT: &str = "\x1b[0m";
 
 struct Grid {
     grid: Vec<Vec<u8>>,
@@ -28,9 +21,9 @@ impl Debug for Grid {
                     .enumerate()
                     .map(|(x, num)| {
                         if (x, y) == self.current {
-                            format!("{}{}{}", OKGREEN, *num as char, ENDC)
+                            format!("{}{}{}", GREEN, *num as char, END_FMT)
                         } else if (x, y) == self.destination {
-                            format!("{}{}{}", FAIL, *num as char, ENDC)
+                            format!("{}{}{}", RED, *num as char, END_FMT)
                         } else {
                             format!("{}", *num as char)
                         }
@@ -98,8 +91,9 @@ impl Grid {
 }
 
 struct PossiblePaths {
-    visited: Vec<(usize, usize)>,
+    to_visit: VecDeque<(usize, usize)>,
     distance: Vec<Vec<usize>>,
+    visited: HashSet<(usize, usize)>,
 }
 
 impl From<&Grid> for PossiblePaths {
@@ -109,7 +103,8 @@ impl From<&Grid> for PossiblePaths {
         let mut distance = vec![vec![usize::MAX; width]; height];
         distance[grid.current.1][grid.current.0] = 0;
         PossiblePaths {
-            visited: vec![grid.current],
+            to_visit: VecDeque::from([grid.current]),
+            visited: HashSet::new(),
             distance,
         }
     }
@@ -121,36 +116,30 @@ impl PossiblePaths {
     }
 
     fn next(&mut self, grid: &Grid) {
-        let last = self.visited.pop().unwrap();
+        let last = self.to_visit.pop_front().unwrap();
         let possible = grid.get_next_possible_steps(last);
-
+        if self.visited.contains(&last) {
+            return;
+        }
         // println!("last: {:?}", last);
         // println!("possible: {:?}", possible);
         let last_len = self.get_distance(last);
-        possible.iter().for_each(|step| {
-            let best_distance = self.get_distance(*step);
-            if best_distance > last_len {
-                self.visited = self
-                    .visited
-                    .clone()
-                    .into_iter()
-                    .filter(|v| step != v || self.get_distance(*v) == last_len + 1)
-                    .collect()
-            }
-            if best_distance > last_len + 1 {
-                self.visited.push(*step);
+        self.visited.insert(last);
+        possible
+            .iter()
+            .filter(|step| !self.visited.contains(step))
+            .for_each(|step| {
+                self.to_visit.push_back(*step);
                 self.distance[step.1][step.0] = last_len + 1;
-            }
-        });
-        // println!("visited: {:?}", self.visited);
+            });
+        // println!("to visit: {:?}", self.to_visit);
     }
 }
 
 pub fn solution(input: &str) -> usize {
     let grid = Grid::from(input);
     let mut possible_paths = PossiblePaths::from(&grid);
-    while !possible_paths.visited.is_empty() {
-        // for _ in 0..15 {
+    while !possible_paths.to_visit.is_empty() {
         // println!();
         // println!(
         //     "{}",
@@ -162,9 +151,9 @@ pub fn solution(input: &str) -> usize {
         //             .iter()
         //             .enumerate()
         //             .map(|(x, num)| {
-        //                 if *possible_paths.visited.last().unwrap() == (x, y) {
+        //                 if *possible_paths.to_visit.iter().last().unwrap() == (x, y) {
         //                     return format!(
-        //                         "{OKGREEN}{:01}{ENDC}",
+        //                         "{GREEN}{:02}{END_FMT}",
         //                         if num == &usize::MAX {
         //                             "#".to_string()
         //                         } else {
@@ -173,7 +162,7 @@ pub fn solution(input: &str) -> usize {
         //                     );
         //                 }
         //                 format!(
-        //                     "{:01}",
+        //                     "{:02}",
         //                     if num == &usize::MAX {
         //                         "#".to_string()
         //                     } else {
@@ -187,7 +176,7 @@ pub fn solution(input: &str) -> usize {
         //         .join("\n")
         // );
         possible_paths.next(&grid);
-        println!("{}", possible_paths.visited.len());
+        println!("{}", possible_paths.to_visit.len());
     }
     possible_paths.get_distance(grid.destination)
 }
