@@ -1,110 +1,66 @@
 use itertools::Itertools;
-use std::fmt::{Debug, Display};
+use std::collections::HashSet;
 
-struct Row {
-    solution: Option<usize>,
+struct Grid {
+    solution: (i32, i32),
 }
 
-struct Sensor {
-    x: i32,
-    y: i32,
-    range: i32,
-}
-
-struct Sensors {
-    sensors: Vec<Sensor>,
-}
-
-impl Sensors {
-    fn is_covered(&self, x: i32, y: i32) -> bool {
-        self.sensors.iter().any(|sensor| {
-            let distance = (sensor.x - x).abs() + (sensor.y - y).abs();
-            distance <= sensor.range
-        })
-    }
-}
-
-impl From<&str> for Sensors {
-    fn from(s: &str) -> Self {
-        let sensors_and_beacons: Vec<Sensor> = s
+impl From<(&str, i32)> for Grid {
+    fn from((s, max): (&str, i32)) -> Self {
+        let sensors_and_beacons: Vec<((i32, i32), (i32, i32))> = s
             .trim()
             .lines()
             .map(|line| {
                 let (sensor_raw, beacon_raw) =
                     line.split_once(": closest beacon is at x=").unwrap();
-                let sensor: (i32, i32) = sensor_raw
+                let sensor = sensor_raw
                     .trim_start_matches("Sensor at x=")
                     .split(", y=")
                     .map(|s| s.parse().unwrap())
                     .collect_tuple()
                     .unwrap();
-                let beacon: (i32, i32) = beacon_raw
+                let beacon = beacon_raw
                     .split(", y=")
                     .map(|s| s.parse().unwrap())
                     .collect_tuple()
                     .unwrap();
-                Sensor {
-                    x: sensor.0,
-                    y: sensor.1,
-                    range: (sensor.0 - beacon.0).abs() + (sensor.1 - beacon.1).abs(),
-                }
+                (sensor, beacon)
             })
             .collect();
-        Sensors {
-            sensors: sensors_and_beacons,
-        }
+        let solution = sensors_and_beacons
+            .iter()
+            .find_map(|((x, y), (bx, by))| {
+                println!("sensor: {},{}", x, y);
+                let distance = (x - bx).abs() + (y - by).abs();
+                let distance_plus_one = distance + 1;
+                (0..=distance_plus_one).find_map(|i| {
+                    let top_left = (x - i, y - distance_plus_one + i);
+                    let top_right = (x + i, y - distance_plus_one + i);
+                    let bottom_left = (x - i, y + distance_plus_one - i);
+                    let bottom_right = (x + i, y + distance_plus_one - i);
+                    vec![top_left, top_right, bottom_left, bottom_right]
+                        .into_iter()
+                        .find(|(x, y)| {
+                            if !(*x >= 0 && *x <= max && *y >= 0 && *y <= max) {
+                                return false;
+                            }
+                            sensors_and_beacons.iter().all(|((sx, sy), (bx, by))| {
+                                let distance = (x - sx).abs() + (y - sy).abs();
+                                let range = (sx - bx).abs() + (sy - by).abs();
+                                distance > range
+                            })
+                        })
+                })
+            })
+            .unwrap();
+
+        Grid { solution }
     }
 }
 
-impl From<(&Sensors, usize, i32, &mut Vec<Cell>)> for Row {
-    fn from((sensors, max, current_row, cells): (&Sensors, usize, i32, &mut Vec<Cell>)) -> Self {
-        // let mut cells = vec![Cell::Empty; max + 1];
-
-        Row {
-            solution: cells.iter().enumerate().find_map(|(x, _)| {
-                if sensors.is_covered(x as i32, current_row) {
-                    None
-                } else {
-                    Some(x)
-                }
-            }),
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Debug)]
-enum Cell {
-    Beacon,
-    Sensor,
-    Empty,
-    Covered,
-}
-
-impl Display for Cell {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Cell::Beacon => write!(f, "B"),
-            Cell::Sensor => write!(f, "S"),
-            Cell::Empty => write!(f, "."),
-            Cell::Covered => write!(f, "#"),
-        }
-    }
-}
-
-pub fn solution(input: &str, max: usize) -> usize {
-    let mut cells = vec![Cell::Empty; max + 1];
-    let sensors = Sensors::from(input);
-    for i in 0..max {
-        println!("row: {}", i);
-        let grid = Row::from((&sensors, max, i as i32, &mut cells));
-        cells.iter_mut().for_each(|cell| {
-            *cell = Cell::Empty;
-        });
-        if let Some(solution) = grid.solution {
-            return solution * 4000000 + i;
-        }
-    }
-    panic!("No solution found");
+pub fn solution(input: &str, max: i32) -> u64 {
+    let grid = Grid::from((input, max));
+    ((grid.solution.0 as u64 * 4000000) + grid.solution.1 as u64) as u64
 }
 
 #[cfg(test)]
