@@ -1,16 +1,8 @@
-use itertools::Itertools;
-use std::collections::{HashSet, VecDeque};
 use std::fmt::{Debug, Error, Formatter};
 
-const HEADER: &str = "\x1b[95m";
-const OKBLUE: &str = "\x1b[94m";
-const OKCYAN: &str = "\x1b[96m";
-const OKGREEN: &str = "\x1b[92m";
-const WARNING: &str = "\x1b[93m";
-const FAIL: &str = "\x1b[91m";
-const ENDC: &str = "\x1b[0m";
-const BOLD: &str = "\x1b[1m";
-const UNDERLINE: &str = "\x1b[4m";
+const GREEN: &str = "\x1b[92m";
+const RED: &str = "\x1b[91m";
+const END_FMT: &str = "\x1b[0m";
 
 struct Grid {
     grid: Vec<Vec<u8>>,
@@ -29,9 +21,9 @@ impl Debug for Grid {
                     .enumerate()
                     .map(|(x, num)| {
                         if (x, y) == self.current {
-                            format!("{}{}{}", OKGREEN, *num as char, ENDC)
+                            format!("{}{}{}", GREEN, *num as char, END_FMT)
                         } else if (x, y) == self.destination {
-                            format!("{}{}{}", FAIL, *num as char, ENDC)
+                            format!("{}{}{}", RED, *num as char, END_FMT)
                         } else {
                             format!("{}", *num as char)
                         }
@@ -170,10 +162,10 @@ pub fn solution(input: &str) -> usize {
             .distance
             .iter()
             .enumerate()
-            .map(|(y, row)| row
+            .map(|(_y, row)| row
                 .iter()
                 .enumerate()
-                .map(|(x, num)| {
+                .map(|(_x, num)| {
                     format!(
                         "{:01}",
                         if num == &usize::MAX {

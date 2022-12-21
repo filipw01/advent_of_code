@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use std::collections::HashSet;
 
 struct Grid {
     solution: (i32, i32),

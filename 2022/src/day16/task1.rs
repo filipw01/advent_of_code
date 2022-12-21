@@ -41,7 +41,7 @@ pub fn solution(input: &str) -> usize {
         .map(Valve::from)
         .map(|v| (v.name.clone(), v))
         .collect();
-    let mut paths = vec![("AA", 0, HashSet::from(["AA"]))];
+    let mut paths = vec![("AA", 0, HashSet::new())];
     let mut time_left = 30;
 
     let max_valve = valves
