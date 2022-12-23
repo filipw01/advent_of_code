@@ -53,7 +53,6 @@ pub fn solution(input: &str) -> usize {
 
     while time_left > 0 {
         time_left -= 1;
-        // previous way of calculating luckily worked, but the proper one is not optimal enough
         let max_difference: usize = top_valves
             .clone()
             .take(time_left)
